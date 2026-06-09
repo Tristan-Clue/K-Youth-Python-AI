@@ -7,8 +7,6 @@ from typing import Generator
 from email import message_from_bytes
 from email.message import Message
 
-
-
 VALID_SUFFIXES = {".mhtml", ".mht"}
 
 # How many bytes to inspect for MIME headers
@@ -178,3 +176,100 @@ def extract_html_part(message: Message) -> Message:
     largest_part = max(html_parts, key=lambda item: item[0])[1]
 
     return largest_part
+
+def decode_html(html_part: Message) -> str:
+    """
+    Decode an HTML MIME part into a usable HTML string.
+
+    Steps:
+    - transfer decode payload
+    - determine charset
+    - decode bytes into string
+    - apply fallback behavior when needed
+    """
+
+    # Transfer decoding
+    payload_bytes = html_part.get_payload(decode=True)
+
+    # Fallback if decode=True returns None
+    #
+    # This can happen with malformed MIME structures
+    # or unusual payload representations.
+    if payload_bytes is None:
+
+        raw_payload = html_part.get_payload(decode=False)
+
+        if raw_payload is None:
+            raise ValueError("HTML payload is empty")
+
+        if isinstance(raw_payload, str):
+            payload_bytes = raw_payload.encode(
+                "utf-8",
+                errors="replace"
+            )
+
+        elif isinstance(raw_payload, bytes):
+            payload_bytes = raw_payload
+
+        else:
+            raise TypeError(
+                f"Unsupported payload type: {type(raw_payload).__name__}"
+            )
+
+    # Determine charset
+    charset = html_part.get_content_charset()
+
+    # Default fallback charset
+    if not charset:
+        charset = "utf-8"
+
+    # Decode bytes into string
+    try:
+        html = payload_bytes.decode(
+            charset,
+            errors="strict"
+        )
+
+    # Invalid charset name
+    except LookupError:
+
+        try:
+            html = payload_bytes.decode(
+                "utf-8",
+                errors="replace"
+            )
+
+        except Exception as error:
+            raise ValueError(
+                "Failed to decode HTML with fallback UTF-8 charset"
+            ) from error
+
+    # Charset exists but decoding failed
+    except UnicodeDecodeError:
+
+        # Common fallback chain
+        fallback_charsets = [
+            "utf-8",
+            "windows-1252",
+            "iso-8859-1",
+        ]
+        for fallback_charset in fallback_charsets:
+
+            try:
+                html = payload_bytes.decode(
+                    fallback_charset,
+                    errors="replace"
+                )
+
+                break
+
+            except Exception:
+                continue
+
+        else:
+            raise ValueError(
+                "Failed to decode HTML payload with all fallback charsets"
+            )
+
+    return html
+
