@@ -1,5 +1,12 @@
 from pathlib import Path
+
+# find_mhtml_files()
 from typing import Generator
+
+# parse_mhtml()
+from email import message_from_bytes
+from email.message import Message
+
 
 
 VALID_SUFFIXES = {".mhtml", ".mht"}
@@ -77,3 +84,54 @@ def find_mhtml_files(directory: str | Path) -> Generator[Path, None, None]:
             continue
 
         yield path
+
+"""
+To define
+parse_mhtml() extract_html_part() decode_html() save_html()
+"""
+
+def parse_mhtml(path: str | Path) -> Message:
+    """
+    Parse an MHTML file into a MIME message object.
+
+    Steps:
+    - open file in binary mode
+    - read raw bytes
+    - parse MIME structure
+    - return parsed message object
+    """
+
+    path = Path(path)
+
+    if not path.exists():
+        raise FileNotFoundError(f"MHTML file does not exist: {path}")
+
+    if not path.is_file():
+        raise ValueError(f"Path is not a file: {path}")
+
+    try:
+        with path.open("rb") as file:
+            raw_bytes = file.read()
+
+    except PermissionError as error:
+        raise PermissionError(
+            f"Permission denied while opening MHTML file: {path}"
+        ) from error
+
+    except OSError as error:
+        raise OSError(
+            f"Failed to read MHTML file: {path}"
+        ) from error
+
+    if not raw_bytes:
+        raise ValueError(f"MHTML file is empty: {path}")
+
+    try:
+        message = message_from_bytes(raw_bytes)
+
+    except Exception as error:
+        raise ValueError(
+            f"Failed to parse MIME structure from file: {path}"
+        ) from error
+
+    return message
