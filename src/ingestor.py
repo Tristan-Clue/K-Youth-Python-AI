@@ -22,7 +22,7 @@ def find_mhtml_files(directory: str | Path) -> Generator[Path, None, None]:
     - file is not empty
     - file header vaguely resembles MIME/MHTML
     """
-
+    count = 0
     directory = Path(directory)
 
     if not directory.exists():
@@ -32,8 +32,8 @@ def find_mhtml_files(directory: str | Path) -> Generator[Path, None, None]:
         raise NotADirectoryError(f"Not a directory: {directory}")
 
     for path in directory.glob("*"):
-
         # Skip non-files
+        count += 1
         if not path.is_file():
             continue
 
@@ -72,7 +72,10 @@ def find_mhtml_files(directory: str | Path) -> Generator[Path, None, None]:
             print(f"[SKIP] Not recognized as MHTML: {path}")
             continue
 
-        yield path
+        yield {
+            "path": path,
+            "count": count,
+        }
 
 def parse_mhtml(path: str | Path) -> Message:
     """
@@ -309,21 +312,22 @@ def save_html(
 
 def ingest_all_mhtml(inPath: str | Path, outPath: str | Path) -> str:
    
-    count = 0
     passed = 0
-    failed = 0
 
-    for path in find_mhtml_files(inPath):
-        try:
-            message = parse_mhtml(path)
-            html_part = extract_html_part(message)
-            html_text = decode_html(html_part)
-            created = save_html(outPath, path, html_text)
-            print(f"✅ Extracted: {path.name}")
-            passed += 1
-        except:
-            print(f"⚠️ No HTML content found in: {path}")
-            failed += 1
+    try:
+        for result in find_mhtml_files(inPath):
+            path = result["path"]
+            try:
+                message = parse_mhtml(path)
+                html_part = extract_html_part(message)
+                html_text = decode_html(html_part)
+                created = save_html(outPath, path, html_text)
+                print(f"✅ Extracted: {path.name}")
+                passed += 1
+            except Exception as error:
+                print(f"⚠️ No HTML content found in: {path}")
 
-    print("📊 Bronze Summary:")
-    print(f"Total: {passed + failed} | Extracted: {passed} | Failed: {failed}")
+        print("📊 Bronze Summary:")
+        print(f"Total: {result["count"]} | Extracted: {passed} | Failed: {result["count"] - passed}")
+    except Exception as error:
+        print(error)
