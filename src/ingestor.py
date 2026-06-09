@@ -12,15 +12,6 @@ VALID_SUFFIXES = {".mhtml", ".mht"}
 # How many bytes to inspect for MIME headers
 HEADER_SNIFF_SIZE = 4096
 
-"""
-!TODO 
-- [] File Validation
--   [] Directory existence
--   [/] Invalid file suffix (skips)
--   [/] Empty .mhtml
--   [/] Permmission error
--   [/] File not containing MIME header (lightweight checking)
-"""
 def find_mhtml_files(directory: str | Path) -> Generator[Path, None, None]:
     """
     Yield probable MHTML files from a directory.
@@ -82,11 +73,6 @@ def find_mhtml_files(directory: str | Path) -> Generator[Path, None, None]:
             continue
 
         yield path
-
-"""
-To define
-extract_html_part() decode_html() save_html()
-"""
 
 def parse_mhtml(path: str | Path) -> Message:
     """
@@ -273,3 +259,71 @@ def decode_html(html_part: Message) -> str:
 
     return html
 
+def save_html(
+    output_directory: str | Path,
+    original_path: str | Path,
+    html: str
+) -> Path:
+    """
+    Save decoded HTML content to an output directory.
+
+    Steps:
+    - ensure output directory exists
+    - generate output filename from original stem
+    - avoid filename collisions
+    - write HTML as UTF-8
+    - return saved file path
+    """
+
+    output_directory = Path(output_directory)
+    original_path = Path(original_path)
+
+    # Ensure output directory exists
+    try:
+        output_directory.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
+    except OSError as error:
+        raise OSError(
+            f"Failed to create output directory: {output_directory}"
+        ) from error
+
+    # Base output filename
+    base_name = original_path.stem
+    output_path = output_directory / f"{base_name}.html"
+    # Write HTML file
+    try:
+        output_path.write_text(
+            html,
+            encoding="utf-8"
+        )
+
+    except OSError as error:
+        raise OSError(
+            f"Failed to write HTML file: {output_path}"
+        ) from error
+
+    return output_path
+
+def ingest_all_mhtml(inPath: str | Path, outPath: str | Path) -> str:
+   
+    count = 0
+    passed = 0
+    failed = 0
+
+    for path in find_mhtml_files(inPath):
+        try:
+            message = parse_mhtml(path)
+            html_part = extract_html_part(message)
+            html_text = decode_html(html_part)
+            created = save_html(outPath, path, html_text)
+            print(f"✅ Extracted: {path.name}")
+            passed += 1
+        except:
+            print(f"⚠️ No HTML content found in: {path}")
+            failed += 1
+
+    print("📊 Bronze Summary:")
+    print(f"Total: {passed + failed} | Extracted: {passed} | Failed: {failed}")
