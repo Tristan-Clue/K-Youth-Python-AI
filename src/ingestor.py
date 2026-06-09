@@ -87,7 +87,7 @@ def find_mhtml_files(directory: str | Path) -> Generator[Path, None, None]:
 
 """
 To define
-parse_mhtml() extract_html_part() decode_html() save_html()
+extract_html_part() decode_html() save_html()
 """
 
 def parse_mhtml(path: str | Path) -> Message:
@@ -135,3 +135,46 @@ def parse_mhtml(path: str | Path) -> Message:
         ) from error
 
     return message
+
+def extract_html_part(message: Message) -> Message:
+    """
+    Extract the largest text/html MIME part from a parsed MHTML message.
+
+    Steps:
+    - walk through MIME tree
+    - collect all text/html parts
+    - choose the largest payload
+    - return the selected MIME part
+    """
+
+    html_parts = []
+
+    for part in message.walk():
+
+        content_type = part.get_content_type()
+
+        if content_type != "text/html":
+            continue
+
+        payload = part.get_payload(decode=False)
+
+        # Skip empty payloads
+        if not payload:
+            continue
+
+        # Normalize payload size calculation
+        if isinstance(payload, str):
+            payload_size = len(payload.encode("utf-8", errors="replace"))
+
+        else:
+            payload_size = len(payload)
+
+        html_parts.append((payload_size, part))
+
+    if not html_parts:
+        raise ValueError("No text/html MIME part found")
+
+    # Select largest HTML part
+    largest_part = max(html_parts, key=lambda item: item[0])[1]
+
+    return largest_part
