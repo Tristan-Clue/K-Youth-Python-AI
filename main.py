@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path # Path is a class that represents a filesystem path using an OOP way
 from src.ingestor import ingest_all_mhtml
 #from src.processor import process_all_html
@@ -32,8 +33,19 @@ def run_bronze():
 	
 def main():
 	# ORCHESTRATION TO BE IMPLEMENTED HERE
-	print("🥉 Bronze:...")
-	run_bronze()
+	if (len(sys.argv) != 2):
+		print ("Only 1 argument allowed")
+		return 1;
+
+	option = sys.argv[len(sys.argv) - 1]
+
+	match option:
+		case "ingest":
+			print("🥉 Bronze:...")
+			run_bronze()
+		case _:
+			print("Unknown argumet")
+			return (1)
 
 if __name__ == "__main__":
     main()
