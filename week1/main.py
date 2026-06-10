@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path # Path is a class that represents a filesystem path using an OOP way
-from project.week1.src.ingestor import ingest_all_mhtml
-#from src.processor import process_all_html
+from src.ingestor import ingest_all_mhtml
+from src.processor import process_all_html
 #from src.loader import load_all_jsons
 #from src.profile import run_data_profile	# Fixed import location
 
@@ -24,7 +24,7 @@ def run_gold():
 def run_silver():
 	input_dir = BRONZE_DIR
 	output_dir = SILVER_DIR
-#	process_all_html(input_dir, output_dir)
+	process_all_html(input_dir, output_dir)
 
 def run_bronze():
 	input_dir = SOURCE_DIR
@@ -43,6 +43,9 @@ def main():
 		case "ingest":
 			print("🥉 Bronze:...")
 			run_bronze()
+		case "process":
+			print("🥈 Silver:...")
+			run_silver()
 		case _:
 			print("Unknown argumet")
 			return (1)
