@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path # Path is a class that represents a filesystem path using an OOP way
-from src.ingestor import ingest_all_mhtml
+from project.week1.src.ingestor import ingest_all_mhtml
 #from src.processor import process_all_html
 #from src.loader import load_all_jsons
 #from src.profile import run_data_profile	# Fixed import location
