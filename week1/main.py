@@ -2,8 +2,8 @@ import sys
 from pathlib import Path # Path is a class that represents a filesystem path using an OOP way
 from src.ingestor import ingest_all_mhtml
 from src.processor import process_all_html
-#from src.loader import load_all_jsons
-#from src.profile import run_data_profile	# Fixed import location
+from src.loader import load_all_jsons
+from src.profile import run_data_profile	# Fixed import location
 
 
 SOURCE_DIR = Path("data/0_source")
@@ -14,12 +14,12 @@ DB_NAME = "jobs.db"
 
 def run_profiler():
 	db_path = GOLD_DIR/DB_NAME
-#	run_data_profile(db_path)
+	run_data_profile(db_path)
 
 def run_gold():
 	input_dir = SILVER_DIR
 	output_dir = GOLD_DIR
-#	load_all_jsons(input_dir, output_dir)
+	load_all_jsons(input_dir, output_dir)
 
 def run_silver():
 	input_dir = BRONZE_DIR
@@ -32,7 +32,6 @@ def run_bronze():
 	ingest_all_mhtml(input_dir, output_dir)
 	
 def main():
-	# ORCHESTRATION TO BE IMPLEMENTED HERE
 	if (len(sys.argv) != 2):
 		print ("Only 1 argument allowed")
 		return 1;
@@ -41,11 +40,18 @@ def main():
 
 	match option:
 		case "ingest":
-			print("🥉 Bronze:...")
 			run_bronze()
 		case "process":
-			print("🥈 Silver:...")
 			run_silver()
+		case "load":
+			run_gold()
+		case "profile":
+			run_profiler()
+		case "all":
+			run_bronze()
+			run_silver()
+			run_gold()
+			run_profiler()
 		case _:
 			print("Unknown argumet")
 			return (1)
