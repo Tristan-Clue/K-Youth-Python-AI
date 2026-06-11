@@ -53,7 +53,7 @@ def main():
 			run_gold()
 			run_profiler()
 		case _:
-			print("Unknown argumet")
+			print("Unknown argument")
 			return (1)
 
 if __name__ == "__main__":
