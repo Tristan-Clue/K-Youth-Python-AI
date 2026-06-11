@@ -26,6 +26,10 @@ def run_data_profile(db_path): # profiler.py
         # Average description length
         cursor.execute("SELECT AVG(LENGTH(description)) FROM jobs WHERE description IS NOT NULL")
         avg_desc_length = cursor.fetchone()[0]
+        if not (avg_desc_length):
+            avg_desc_length = "-"
+        if (type(avg_desc_length) == float):
+            avg_desc_length = int(avg_desc_length)
 
         # Shortest description
         cursor.execute("""
@@ -39,6 +43,8 @@ def run_data_profile(db_path): # profiler.py
             LIMIT 1
         """)
         shortest = cursor.fetchone()
+        if not shortest:
+            shortest = ("-", "-", "-")
 
         # Longest description
         cursor.execute("""
@@ -52,12 +58,14 @@ def run_data_profile(db_path): # profiler.py
             LIMIT 1
         """)
         longest = cursor.fetchone()
+        if not longest:
+            longest = ("-", "-", "-")
 
         print("--- 🔍 DATA QUALITY REPORT ---")
         print(f"📈 Total Records: {total_records}")
         print(f"❓ Missing Values -> job_title: {null_job_title}, company: {null_company}, description: {null_description}")
-        print(f"📝 Avg Description Length: {int(avg_desc_length)} char")
-        print(f"⚠️ Shortest Description: {shortest[-1]} char")
+        print(f"📝 Avg Description Length: {avg_desc_length} char")
+        print(f"⚠️ Shortest Description: {shortest[2]} char")
         print(f"   ↳ source_id: {shortest[0]} | job_title: {shortest[1]}")
-        print(f"🚨 Longest Description: {longest[-1]} char")
+        print(f"🚨 Longest Description: {longest[2]} char")
         print(f"   ↳ source_id: {longest[0]} | job_title: {longest[1]}")
