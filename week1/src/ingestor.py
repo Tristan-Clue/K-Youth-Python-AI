@@ -11,25 +11,25 @@ def save_html(output_directory, original_path, html: str):
     except Exception as error:
         raise error
 
-def ingest_all_mhtml(inPath: str | Path, outPath: str | Path) -> str:
+def ingest_all_mhtml(input_dir, output_dir) -> str:
    
     passed = 0
     total = 0
-
-    if not inPath.is_dir():
-        print("Error no inpath")
+    print("🥉 Bronze:...")
+    if not input_dir.exists():
+        print(f"{input_dir.name} does not exist!")
         return
-    if not inPath.exists():
-        print("no inpath")
+    if not input_dir.is_dir():
+        print(f"{input_dir.name} is not a directory!")
         return
     try:
-        outPath.mkdir(parents=True, exist_ok=True)
+        output_dir.mkdir(parents=True, exist_ok=True)
     except Exception as error:
-        print(error)
+        print(f"{output_dir.name}: {error}")
         return
  
     try:
-        for path in inPath.glob("*.mhtml"):
+        for path in input_dir.glob("*.mhtml"):
             total += 1
             try:
                 with path.open("rb") as file:
@@ -43,7 +43,7 @@ def ingest_all_mhtml(inPath: str | Path, outPath: str | Path) -> str:
                             if isinstance(string, str):
                                 string = quopri.decodestring(string.encode())
                             string = string.decode(charset, errors="replace")
-                            save_html(outPath, path, string)
+                            save_html(output_dir, path, string)
                             print(f"✅ Extracted: {path.name}")
                             passed += 1
                             break
