@@ -1,4 +1,3 @@
-from pathlib import Path
 from bs4 import BeautifulSoup
 from pydantic import BaseModel
 
@@ -11,7 +10,7 @@ class JobListing(BaseModel):
 def get_soup_text(html, detail):
     attr = html.find(attrs={"data-automation": detail})
     if (attr):
-        return attr.get_text()
+        return attr.get_text(separator=" ", strip=True)
     return None
 
 def save_json(output_directory, original_path, toJSON):
@@ -26,17 +25,18 @@ def process_all_html(input_dir, output_dir): # processor.py
         
     count = 0
     passed = 0
-
-    if not input_dir.is_dir():
-        print("Error no inpath")
-        return
+    
+    print("🥈 Silver:...")
     if not input_dir.exists():
-        print("no inpath")
+        print(f"{input_dir.name} does not exist!")
+        return
+    if not input_dir.is_dir():
+        print(f"{input_dir.name} is not a directory!")
         return
     try:
         output_dir.mkdir(parents=True, exist_ok=True)
     except Exception as error:
-        print(error)
+        print(f"{output_dir.name}: {error}")
         return
     
     for path in input_dir.glob("*.html"):
@@ -49,17 +49,14 @@ def process_all_html(input_dir, output_dir): # processor.py
                 job_title = get_soup_text(html, "job-detail-title")
                 if not job_title:
                     print(f"⚠️ Missing job_title in: {path.name}")
-                    error += 1
                     continue
                 company = get_soup_text(html, "advertiser-name")
                 if not company:
                     print(f"⚠️ Missing company in: {path.name}")
-                    error += 1
                     continue
                 description = get_soup_text(html, "jobAdDetails")
                 if not description:
                     print(f"⚠️ Missing description in: {path.name}")
-                    error += 1
                     continue
             jl = JobListing(source_id=id, job_title=job_title, company=company, description=description)
             save_json(output_dir, path, jl)
