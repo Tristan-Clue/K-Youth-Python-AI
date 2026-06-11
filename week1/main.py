@@ -34,7 +34,7 @@ def run_bronze():
 def main():
 	if (len(sys.argv) != 2):
 		print ("Only 1 argument allowed")
-		return 1;
+		return 1
 
 	option = sys.argv[len(sys.argv) - 1]
 

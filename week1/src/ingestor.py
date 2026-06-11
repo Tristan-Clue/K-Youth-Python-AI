@@ -1,4 +1,3 @@
-from pathlib import Path
 from email import message_from_binary_file
 import quopri
 
