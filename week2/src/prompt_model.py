@@ -14,35 +14,32 @@ def prompt_model(model: str, prompt: str) -> str :
 
 	client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 	try:
-		try: 
-			if model not in allmodels:
-				raise ValueError(f"Model {model} not found in available models.")
-			if (model.startswith("gemini")):
-				print("Using Gemini API key")
-				response = client.models.generate_content(model=model, contents=prompt).text
-			else:
-				print(f"Asking model: {model}")
-				response = ollama.generate(model=model, prompt=prompt, stream=False)['response']
-			return response
-		except Exception as e:
-			print(f"An error occurred with model {model}: {e}")
+		if model not in allmodels:
+			raise ValueError(f"Model {model} not found in available models.")
+		if (model.startswith("gemini")):
+			print("Using Gemini API key")
+			response = client.models.generate_content(model=model, contents=prompt).text
+		else:
+			print(f"Asking model: {model}")
+			response = ollama.generate(model=model, prompt=prompt, stream=False)['response']
+		return response
 
-			for m in ollamalist:
-				try:
-					print(f"Testing ollama model: {m}")
-					response = ollama.generate(model=m, prompt=prompt, options={"num_predict": 100})
-					return response['response']
-				except Exception as e:
-					print(f"An error occurred with model {m}: {e}")
-					continue
-			for g in geminilist:
-				try:
-					print(f"Testing gemini model: {g}")
-					response = client.models.generate_content(model=g, contents=prompt)
-					return response.text
-				except Exception as e:
-					print(f"An error occurred with model {g}: {e}")
-					continue
-			return ("All models failed to generate a response.")
+			# for m in ollamalist:
+			# 	try:
+			# 		print(f"Testing ollama model: {m}")
+			# 		response = ollama.generate(model=m, prompt=prompt, options={"num_predict": 100})
+			# 		return response['response']
+			# 	except Exception as e:
+			# 		print(f"An error occurred with model {m}: {e}")
+			# 		continue
+			# for g in geminilist:
+			# 	try:
+			# 		print(f"Testing gemini model: {g}")
+			# 		response = client.models.generate_content(model=g, contents=prompt)
+			# 		return response.text
+			# 	except Exception as e:
+			# 		print(f"An error occurred with model {g}: {e}")
+			# 		continue
+			# return ("All models failed to generate a response.")
 	except Exception as e:
 		return (f"An error occurred while generating response: {e}")
