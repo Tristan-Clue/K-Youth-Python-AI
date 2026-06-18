@@ -8,7 +8,7 @@ import os
 def prompt_model(model: str, prompt: str) -> str :
 	
 	load_dotenv()
-	ollamalist = ["phi3", "llama3.1", "deepseek-r1", "gemma4:e2b"]
+	ollamalist = ["phi3", "llama3.1", "deepseek-r1", "gemma4:e2b", "llama3.2:3b"]
 	geminilist = ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"]
 	allmodels = ollamalist + geminilist
 
