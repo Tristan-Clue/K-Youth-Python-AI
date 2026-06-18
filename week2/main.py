@@ -1,16 +1,10 @@
-import sys
-from src.prompt_model import prompt_model
 from src.tag_data import tag_data
 
-
-
 def main():
-    limits = extract_rate_limits("rate_limits.txt")
-    #print(limits)
     try:
-        print(get_batch_size("phi3", 100, limits))
+        tag_data("data/jobs_d1.db")
     except Exception as e:
-        print("error")
+        print(f"Something went wrong: {e}")
 
     # if (len(sys.argv) == 3):
     #     try:
