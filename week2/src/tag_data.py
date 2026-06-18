@@ -12,61 +12,61 @@ INSTRUCTION_TOKENS = 150
 AVG_JOB_TOKENS = 665
 AVG_OUTPUT_TOKENS = 30
 TOKENS_PER_JOB = AVG_JOB_TOKENS + AVG_OUTPUT_TOKENS
+PRACTICAL_BATCH_SIZE = 25
+MODEL_UTILIZE = 0.5
+MINIMUM_BATCH_SIZE = 5
 
-MODEL = "llama3.2:3b"
+MODEL = "gemini-2.5-flash"
 
 def extract_rate_limits(filepath: str):
-    rate_limits = {}
+	rate_limits = {}
 
-    with open(filepath, "r") as file:
-        for line in file:
-            line = line.strip()
+	with open(filepath, "r") as file:
+		for line in file:
+			line = line.strip()
 
-            if not line:
-                continue
+			if not line:
+				continue
 
-            model, rpm, tpm, rpd = line.split()
-            tpm = int(tpm.replace("k", "")) * 1000
-            rate_limits[model] = {"rpm": int(rpm), "tpm": tpm, "rpd": int(rpd)}
-    return rate_limits
+			model, rpm, tpm, rpd = line.split()
+			tpm = int(tpm.replace("k", "")) * 1000
+			rate_limits[model] = {"rpm": int(rpm), "tpm": tpm, "rpd": int(rpd)}
+	return rate_limits
 
 def calc_from_rate_limits(model_name: str, total_jobs: int, rate_limits: dict):
-    if model_name not in rate_limits:
-        raise ValueError(f"Model {model_name} not found in rate limits.")
+	if model_name not in rate_limits:
+		raise ValueError(f"Model {model_name} not found in rate limits.")
 
-    model_info = rate_limits[model_name]
+	model_info = rate_limits[model_name]
 
-    rpm = model_info["rpm"]
-    tpm = model_info["tpm"]
-    rpd = model_info["rpd"]
+	#rpm = model_info["rpm"]
+	#tpm = model_info["tpm"]
+	rpd = model_info["rpd"]
 
-    max_tokens_per_request = tpm / rpm
+	usable_requests = math.floor(rpd * MODEL_UTILIZE)
+	batch = math.ceil(total_jobs / usable_requests)
+	batch_size = min(batch, PRACTICAL_BATCH_SIZE)
+	if batch_size < MINIMUM_BATCH_SIZE:
+		batch_size = MINIMUM_BATCH_SIZE
 
-    max_batch_by_tpm = math.floor((max_tokens_per_request - INSTRUCTION_TOKENS) / TOKENS_PER_JOB)
-    min_batch_by_rpd = math.ceil(total_jobs / rpd)
+	return batch_size
 
-    if min_batch_by_rpd > max_batch_by_tpm:
-        raise ValueError("Cannot satisfy RPD and TPM constraints simultaneously.")
+def calc_from_local_limits():
 
-    batch_size = min_batch_by_rpd
-    return batch_size
+	tokens_per_second = 40
+	max_latency_seconds = 30
+	max_tokens = tokens_per_second * max_latency_seconds
+	batch_size = math.floor((max_tokens - INSTRUCTION_TOKENS) / TOKENS_PER_JOB)
 
-def calc_from_local_limits(model_name: str):
-
-    tokens_per_second = 40
-    max_latency_seconds = 30
-    max_tokens = tokens_per_second * max_latency_seconds
-    batch_size = math.floor((max_tokens - INSTRUCTION_TOKENS) / TOKENS_PER_JOB)
-
-    if batch_size < 3:
-        batch_size = 3
-    return batch_size
+	if batch_size < 3:
+		batch_size = 3
+	return batch_size
 
 def get_batch_size(model_name: str, total_jobs=None, rate_limits=None):
-    if model_name.startswith("gemini"):
-        return calc_from_rate_limits(model_name, total_jobs, rate_limits)
-    else:
-        return calc_from_local_limits(model_name)
+	if model_name.startswith("gemini"):
+		return calc_from_rate_limits(model_name, total_jobs, rate_limits)
+	else:
+		return calc_from_local_limits()
 
 def response_validation(rows, response):
 	try:
@@ -190,13 +190,18 @@ def llm_results(rows):
 def tag_data(db_url: str):
 	db = Path(db_url)
 	if not db.exists():
-		print(f"{db.name} does not exist!")
 		raise FileNotFoundError("DB does not exist")
+	try:
+		limits = extract_rate_limits("rate_limits.txt")
+		batch_size = get_batch_size(MODEL, 8, limits)
+	except Exception:
+		raise FileNotFoundError("Rate_limits file doesn't exist")
+	
 	with sqlite3.connect(db) as connection:
 		cursor = connection.cursor()
 		batchNo = 1
 		while True:
-			row = cursor.execute("SELECT source_id, description FROM jobs WHERE tech_stack IS NULL or tech_stack = '' ORDER BY source_id LIMIT 3;").fetchall()
+			row = cursor.execute(f"SELECT source_id, description FROM jobs WHERE tech_stack IS NULL or tech_stack = '' ORDER BY source_id LIMIT {batch_size};").fetchall()
 			
 			if not row:
 				print("No more rows")
