@@ -1,4 +1,4 @@
-from src.tag_data import tag_data
+#from src.tag_data import tag_data
 from src.find_skill_gap import find_skill_gaps
 
 def main():

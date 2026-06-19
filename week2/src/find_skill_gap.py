@@ -120,5 +120,4 @@ def find_skill_gaps(input_file_path: str, db_url: str) -> SkillGapResult:
 	db_skill = get_market_skills(db_url)
 
 	gaps = (sorted(db_skill - resume_skills))
-
 	return (SkillGapResult(gaps = gaps))
