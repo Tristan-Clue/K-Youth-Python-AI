@@ -183,7 +183,8 @@ def llm_results(rows):
 			print(f"Attempt {attempt + 1} failed with error: {e}. Retrying...")
 			if attempt < MAX_RETRIES - 1:
 				print(f"Retrying in {RETRY_DELAY} seconds...")
-				time.sleep(RETRY_DELAY)
+				if MODEL.startswith("gemini"):
+					time.sleep(12)
 	print(f"Failed after {MAX_RETRIES} attempts")
 	return None
 
@@ -193,9 +194,11 @@ def tag_data(db_url: str):
 		raise FileNotFoundError("DB does not exist")
 	try:
 		limits = extract_rate_limits("rate_limits.txt")
-		batch_size = get_batch_size(MODEL, 8, limits)
-	except Exception:
+		batch_size = get_batch_size(MODEL, 8, limits)	# TODO Instead of fixed job count, set dynamically
+	except FileNotFoundError:
 		raise FileNotFoundError("Rate_limits file doesn't exist")
+	except Exception as error:
+		raise (f"Failure: {error}")
 	
 	with sqlite3.connect(db) as connection:
 		cursor = connection.cursor()
@@ -209,7 +212,7 @@ def tag_data(db_url: str):
 
 			batch = llm_results(row) # takes in the LLM prompt, returns a list of tuples containing source_id and tech_stack
 			if batch is None:
-				print("Not supposed to happen")
+				print("Batch failed after maximum retries.")
 				return 
 			print(f"Batch update: {batchNo}")
 			for source_id, tech_stack in batch:
