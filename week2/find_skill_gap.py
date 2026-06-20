@@ -1,8 +1,12 @@
 from pydantic import BaseModel
+from prompt_model import prompt_model
 import sqlite3
-
-# For testing
+import time
 import json
+
+MAX_RETRIES = 3
+RETRY_DELAY = 12
+MODEL = "gemini-2.5-flash"
 
 class SkillGapResult(BaseModel):
 	gaps: list[str]
@@ -19,29 +23,94 @@ def read_resume(input_file_path: str) -> str:
 	except Exception as error:
 		print(f"Error reading resume: {error}")
 		return ""
-	
-def extract_technical_skills(resume_text: str) -> list[str]:
+
+def response_validation(response: str) -> list[str]:
+	# Step 1: Empty response
+	if not response:
+		raise ValueError("Empty response from LLM")
+	response = response.strip()
+
+	# Step 2: Remove markdown wrappers if model ignores prompt
+	response = response.replace("```json", "").replace("```", "").strip()
+
+	# Step 3: Parse JSON
 	try:
-		start = resume_text.find("Technical Skills:")
-		if start == -1:
-			return []
+		parsed = json.loads(response)
+	except json.JSONDecodeError:
+		raise ValueError("Failed to parse JSON response")
 
-		start += len("Technical Skills:")
-		end = resume_text.find("Languages:", start)
+	# Step 4: Validate structure
+	if not isinstance(parsed, dict):
+		raise ValueError("Response is not a JSON object")
 
-		if end == -1:
-			end = resume_text.find("Additional Skills:", start)
+	if "tech_stack" not in parsed:
+		raise ValueError("Missing tech_stack field")
 
-		if end == -1:
-			end = len(resume_text)
+	tech_stack = parsed["tech_stack"]
 
-		technical_skills_text = resume_text[start:end]
-		skills = technical_skills_text.split(",")
-		return skills
+	if not isinstance(tech_stack, str):
+		raise ValueError("tech_stack must be a string")
 
-	except Exception as error:
-		print(f"Error extracting technical skills: {error}")
+	tech_stack = tech_stack.strip()
+
+	# Step 5: Handle N/A
+	if tech_stack.lower() == "n/a":
 		return []
+
+	# Step 6: Convert to skill list
+	skills = tech_stack.split(",")
+
+	cleaned_skills = []
+	for skill in skills:
+		skill = skill.strip()
+
+		if skill:
+			cleaned_skills.append(skill)
+
+	return cleaned_skills
+
+def llm_results(resume):
+
+	# Build prompt
+	prompt = f"""
+	Extract only technical skills from this resume.
+
+	Rules:
+	- Include only technical skills
+	- Exclude certifications
+	- Exclude soft skills
+	- Exclude spoken languages
+	- Lowercase all skills
+	- Keep slash-based skills intact (e.g. ci/cd, a/b testing, c/c++)
+	- Do not wrap output in markdown.
+	- Return raw JSON only.
+
+	If no technical skills are found, return:
+	{{"tech_stack": "N/A"}}
+
+	Return output strictly in JSON format:
+	{{
+	"tech_stack": "skill1, skill2, skill3"
+	}}
+
+	Resume:
+	{resume}
+	"""
+	for attempt in range(MAX_RETRIES):
+		try:
+			result = prompt_model(MODEL, prompt, 0)
+			batch = response_validation(result)
+			return batch
+		except Exception as e:
+			print(f"Attempt {attempt + 1} failed with error: {e}. Retrying...")
+			if attempt < MAX_RETRIES - 1:
+				if MODEL.startswith("gemini"):
+					print(f"Retrying in {RETRY_DELAY} seconds...")
+					time.sleep(RETRY_DELAY)
+				else:
+					print(f"Retrying...")
+	print(f"Failed after {MAX_RETRIES} attempts")
+	return None
 
 def normalize_skills(skills: list[str]) -> set[str]:
 	normalized_skills = set()
@@ -118,7 +187,7 @@ def find_skill_gaps(input_file_path: str, db_url: str) -> SkillGapResult:
 	if not resume_text:
 		return SkillGapResult(gaps=[])
 	
-	skills = extract_technical_skills(resume_text)
+	skills = llm_results(resume_text)
 	resume_skills = normalize_skills(skills)
 	db_skill = get_market_skills(db_url)
 
@@ -126,10 +195,9 @@ def find_skill_gaps(input_file_path: str, db_url: str) -> SkillGapResult:
 	return (SkillGapResult(gaps = gaps))
 
 if __name__ == "__main__":
-	gap = find_skill_gaps("data/resume_d3_eval.txt", "data/jobs_d3_eval.db")
-	print(gap)
-	# For testing
 	try:
+		gap = find_skill_gaps("data/resume_d3_eval.txt", "data/jobs_d3_eval.db")
+		print(gap)
 		with open('data/d3_truth.json', 'r', encoding='utf-8') as file:
 			truth = json.load(file)
 		with open('data/d3_wrong.json', 'r', encoding='utf-8') as file:
