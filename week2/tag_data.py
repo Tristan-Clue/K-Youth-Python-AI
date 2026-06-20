@@ -6,7 +6,8 @@ from pathlib import Path
 from prompt_model import prompt_model
 
 MAX_RETRIES = 3
-RETRY_DELAY = 5
+RETRY_DELAY = 12
+JOB_COUNT = 8
 
 INSTRUCTION_TOKENS = 150
 AVG_JOB_TOKENS = 665
@@ -16,7 +17,7 @@ PRACTICAL_BATCH_SIZE = 25
 MODEL_UTILIZE = 0.5
 MINIMUM_BATCH_SIZE = 5
 
-MODEL = "llama3.2:3b"
+MODEL = "gemini-2.5-flash"
 
 def extract_rate_limits(filepath: str):
 	rate_limits = {}
@@ -39,11 +40,13 @@ def calc_from_rate_limits(model_name: str, total_jobs: int, rate_limits: dict):
 
 	model_info = rate_limits[model_name]
 
+	tpm = model_info["tpm"]
 	rpd = model_info["rpd"]
 
 	usable_requests = math.floor(rpd * MODEL_UTILIZE)
-	batch = math.ceil(total_jobs / usable_requests)
-	batch_size = min(batch, PRACTICAL_BATCH_SIZE)
+	required_batch_size = math.ceil(total_jobs / usable_requests)
+	max_batch_limit = min(PRACTICAL_BATCH_SIZE, tpm / TOKENS_PER_JOB)
+	batch_size = min(required_batch_size, max_batch_limit)
 	if batch_size < MINIMUM_BATCH_SIZE:
 		batch_size = MINIMUM_BATCH_SIZE
 
@@ -153,6 +156,8 @@ def llm_results(rows):
 
 	Rules:
 	- Return ONLY valid JSON.
+	- No markdown.
+	- No explanation.
 	- Preserve source_id exactly.
 	- Return one result for every input job.
 	- tech_stack must be a comma-separated string.
@@ -172,17 +177,20 @@ def llm_results(rows):
 
 	{jobs_json}
 	"""
+
 	for attempt in range(MAX_RETRIES):
 		try:
-			result = prompt_model(MODEL, prompt)
+			result = prompt_model(MODEL, prompt, 0.3)
 			batch = response_validation(rows, result)
 			return batch
 		except Exception as e:
 			print(f"Attempt {attempt + 1} failed with error: {e}. Retrying...")
 			if attempt < MAX_RETRIES - 1:
-				print(f"Retrying in {RETRY_DELAY} seconds...")
 				if MODEL.startswith("gemini"):
-					time.sleep(12)
+					print(f"Retrying in {RETRY_DELAY} seconds...")
+					time.sleep(RETRY_DELAY)
+				else:
+					print(f"Retrying...")
 	print(f"Failed after {MAX_RETRIES} attempts")
 	return None
 
@@ -192,7 +200,7 @@ def tag_data(db_url: str):
 		raise FileNotFoundError("DB does not exist")
 	try:
 		limits = extract_rate_limits("rate_limits.txt")
-		batch_size = get_batch_size(MODEL, 8, limits)	# TODO Instead of fixed job count, set dynamically
+		batch_size = get_batch_size(MODEL, JOB_COUNT, limits)
 	except FileNotFoundError:
 		raise FileNotFoundError("Rate_limits file doesn't exist")
 	except Exception as error:
@@ -219,6 +227,8 @@ def tag_data(db_url: str):
 			connection.commit()
 			batchNo += 1
 
-
 if __name__ == "__main__":
-    tag_data("data/jobs_d1.db")
+	try: 
+		tag_data("data/jobs_d1.db")
+	except Exception as error:
+		print(error)
