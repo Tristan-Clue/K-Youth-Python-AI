@@ -6,8 +6,52 @@ const chatHistory = document.getElementById("chat-history");
 const pdfUpload = document.getElementById("pdf-upload");
 
 let isSending = false;
+//let pdfjsLib = null;
+
+// --- Initialize PDF.js once at module load time ---
+(async function initPdfJs() {
+    pdfjsLib = await import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.min.mjs");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.worker.min.mjs";
+})();
 
 sendButton.addEventListener("click", sendMessage);
+
+// --- PDF Upload Handler ---
+// Stores the raw file; extraction happens on send to avoid unnecessary work
+
+let pendingPdfFile = null;
+
+pdfUpload.addEventListener("change", function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
+        addMessage("Please upload a PDF file.", "bot");
+        pdfUpload.value = "";
+        return;
+    }
+
+    pendingPdfFile = file;
+    addMessage(`PDF selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB). Click Send to attach.`, "bot");
+});
+
+async function extractPdfText(arrayBuffer) {
+    // pdfjsLib is initialized once at module load time (initPdfJs IIFE)
+    if (!pdfjsLib) {
+        throw new Error("PDF.js library not loaded yet");
+    }
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let fullText = "";
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map(item => item.str).join(" ");
+        fullText += pageText + "\n";
+    }
+
+    return fullText.trim();
+}
 
 
 chatInput.addEventListener("keypress", function(event) {
@@ -31,12 +75,27 @@ async function sendMessage() {
     addMessage(message, "user");
     chatInput.value = "";
 
+    // Extract PDF text at send time if a file was selected
+    let pdfTextToSend = null;
+    if (pendingPdfFile) {
+        try {
+            const arrayBuffer = await pendingPdfFile.arrayBuffer();
+            pdfTextToSend = await extractPdfText(arrayBuffer);
+            addMessage(`PDF attached: ${pendingPdfFile.name} (${pdfTextToSend.length} characters)`, "bot");
+        } catch (error) {
+            console.error("PDF extraction failed:", error);
+            addMessage("Failed to read PDF. Message sent without resume.", "bot");
+        }
+        pendingPdfFile = null;
+        pdfUpload.value = "";
+    }
+
     try {
         const formData = { message: message };
 
-        // Attach extracted PDF text if a file is uploaded
-        if (window._extractedPdfText) {
-            formData.resume_text = window._extractedPdfText;
+        // Attach extracted PDF text if a file was uploaded
+        if (pdfTextToSend) {
+            formData.resume_text = pdfTextToSend;
         }
 
         const response = await fetch(window.BACKEND_URL + "/chat", {

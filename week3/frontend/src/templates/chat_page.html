@@ -62,9 +62,8 @@
 
     </div>
 
-    <!-- PDF.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.min.mjs" type="module"></script>
-
+    <!-- PDF.js is dynamically imported in chat.js -->
+    
     <!-- Backend URL from env var, passed via Jinja context -->
     <script>
         window.BACKEND_URL = "{{ backend_url }}";
