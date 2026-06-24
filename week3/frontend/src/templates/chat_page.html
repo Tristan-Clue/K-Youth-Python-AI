@@ -1,9 +1,76 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-    <title>Hello</title>
+    <!-- Encoding -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Resume Helper Chatbot</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+   <!-- Link to styles.css -->
+    <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-    <h1>Hello World</h1>
+    <!-- Using bootstrap container css, margin top set 4 -->
+    <div class="container mt-4">
+
+        <!-- Title -->
+        <h1 class="mb-4 text-center">Resume Helper Chatbot</h1>
+
+        <!-- Chat History -->
+        <div id="chat-history" class="chat-box border rounded shadow p-3 mb-3">
+
+            <!-- Example Bot Message -->
+            <div class="message bot-message">
+                Hello! Upload your resume PDF or ask me anything.
+            </div>
+
+            <!-- Example User Message -->
+            <div class="message user-message">
+                Can you help improve my resume?
+            </div>
+
+        </div>
+
+        <!-- PDF Upload -->
+        <div class="mb-3">
+            <label for="pdf-upload" class="form-label">Upload Resume (PDF)</label>
+            <input class="form-control" type="file" id="pdf-upload" accept=".pdf">
+        </div>
+
+        <!-- Input + Send -->
+        <!-- Children becomes column -->
+        <!-- Set gap between to 2 to not stick -->
+        <div class="row g-2">   
+            <div class="col-10">
+                <input 
+                    type="text" 
+                    id="chat-input"
+                    class="form-control"
+                    placeholder="Type your message here..."
+                >
+            </div>
+
+            <!-- d-grid stretches grid container instead of just text -->
+            <div class="col-2 d-grid">
+                <button id="send-btn" class="btn btn-primary">
+                    Send
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.min.mjs" type="module"></script>
+
+    <!-- Backend URL from env var, passed via Jinja context -->
+    <script>
+        window.BACKEND_URL = "{{ backend_url }}";
+    </script>
+
+    <!-- Your JS -->
+    <script src="/static/js/chat.js"></script>
 </body>
 </html>
