@@ -62,14 +62,14 @@
 
     </div>
 
-    <!-- PDF.js is dynamically imported in chat.js -->
-    
+    <!-- PDF.js — loaded explicitly by chat.js-->
+
     <!-- Backend URL from env var, passed via Jinja context -->
     <script>
         window.BACKEND_URL = "{{ backend_url }}";
     </script>
 
     <!-- Your JS -->
-    <script src="/static/js/chat.js"></script>
+    <script type="module" src="/static/js/chat.js"></script>
 </body>
 </html>

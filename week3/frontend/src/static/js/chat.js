@@ -1,4 +1,9 @@
-console.log("chat.js loaded");
+// Importing pdf.js to module
+import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.min.mjs"
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.worker.min.mjs";
+
 
 const chatInput = document.getElementById("chat-input");
 const sendButton = document.getElementById("send-btn");
@@ -6,20 +11,13 @@ const chatHistory = document.getElementById("chat-history");
 const pdfUpload = document.getElementById("pdf-upload");
 
 let isSending = false;
-//let pdfjsLib = null;
+let pendingPdfFile = null;
 
-// --- Initialize PDF.js once at module load time ---
-(async function initPdfJs() {
-    pdfjsLib = await import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.min.mjs");
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.worker.min.mjs";
-})();
 
 sendButton.addEventListener("click", sendMessage);
 
 // --- PDF Upload Handler ---
 // Stores the raw file; extraction happens on send to avoid unnecessary work
-
-let pendingPdfFile = null;
 
 pdfUpload.addEventListener("change", function(event) {
     const file = event.target.files[0];
@@ -36,10 +34,6 @@ pdfUpload.addEventListener("change", function(event) {
 });
 
 async function extractPdfText(arrayBuffer) {
-    // pdfjsLib is initialized once at module load time (initPdfJs IIFE)
-    if (!pdfjsLib) {
-        throw new Error("PDF.js library not loaded yet");
-    }
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     let fullText = "";
 
