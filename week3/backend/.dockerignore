@@ -4,9 +4,4 @@ __pycache__/
 .git
 .gitignore
 .pytest_cache/
-README.md
-Dockerfile
-.dockerignore
-
-# .python-version not needed since Dockerfile already sets a version of Python to install
-.python-version
+.env
