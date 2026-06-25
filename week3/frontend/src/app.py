@@ -2,48 +2,48 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
-# Creates web server object
 app = FastAPI()
 
-# __file__ : special variable for path to script file
-# path.resolve() : get absolute path
-# path.parent : get the directory of the script
 base_dir = Path(__file__).resolve().parent
 templates = Jinja2Templates(base_dir / "templates")
 
-
 app.mount(
-"/static",
-StaticFiles(directory=base_dir / "static"),
-name="static"
+    "/static",
+    StaticFiles(directory=base_dir / "static"),
+    name="static"
 )
 
 class ChatRequest(BaseModel):
     message: str
+    resume_text: str | None = None
 
-# Registers route inside app; Creates  GET/ route
-# Decorator, attaches behavior to functions. Like events?
-# Tells FastAPI: "When someone sents a HTTP GET request to this route, run this function"
-# When browser request homepage (localhost:8000/), run home()
+BACKEND_URL = os.getenv("BACKEND_URL", "http://backend:8001")
+
+
 @app.get("/")
 def home(request: Request):
     return templates.TemplateResponse(
         request=request,
-        name="chat_page.html",
-        # Passing context (BACKEND_URL) to HTML
-        context={"backend_url": os.getenv("BACKEND_URL", "http://backend:8001")}
+        name="chat_page.html"
     )
 
-@app.post("/chat")
-def chat(request: ChatRequest):
-    
 
-    reply = f"You said: {request.message}"
+@app.post("/api/chat")
+async def proxy_chat(req: ChatRequest):
+    """Proxy the chat request to the backend service."""
+    import httpx
 
-    return {"reply": reply}
+    async with httpx.AsyncClient(timeout=60) as client:
+        resp = await client.post(f"{BACKEND_URL}/chat", json=req.model_dump())
+
+    if resp.status_code != 200:
+        return JSONResponse(status_code=resp.status_code, content=resp.json())
+
+    return resp.json()
