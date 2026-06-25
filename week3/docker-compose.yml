@@ -1,0 +1,38 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend
+    networks:
+      - resume-net
+    env_file:
+      - ./backend/.env
+    environment:
+      - MODEL_PROVIDER=${MODEL_PROVIDER:-ollama}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - DATABASE=${DATABASE:-jobs_d3_eval.db}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8001:8001"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    networks:
+      - resume-net
+    env_file:
+      - ./frontend/.env
+    environment:
+      - BACKEND_URL=http://backend:8001
+    ports:
+      - "8000:8000"
+    depends_on:
+      - backend
+
+networks:
+  resume-net:
+    driver: bridge
