@@ -181,8 +181,8 @@ def get_market_skills(db_url: str) -> set[str]:
 		print(f"Error reading database: {error}")
 		return set()
 
-def find_skill_gaps(input_file_path: str, db_url: str) -> SkillGapResult:
-	resume_text = read_resume(input_file_path)
+def find_skill_gaps(resume: str, db_url: str) -> SkillGapResult:
+	resume_text = resume
 
 	if not resume_text:
 		return SkillGapResult(gaps=[])
