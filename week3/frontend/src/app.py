@@ -37,7 +37,7 @@ def home(request: Request):
         request=request,
         name="chat_page.html",
         # Passing context (BACKEND_URL) to HTML
-        context={"backend_url": os.getenv("BACKEND_URL", "http://localhost:8001")}
+        context={"backend_url": os.getenv("BACKEND_URL", "http://backend:8001")}
     )
 
 @app.post("/chat")
