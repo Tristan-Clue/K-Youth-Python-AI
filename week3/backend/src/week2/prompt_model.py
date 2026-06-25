@@ -5,9 +5,8 @@ import os
 
 load_dotenv()
 
-OLLAMA_HOST = os.getenv("OLLAMA_HOST", "ollama")
 OLLAMA_PORT = int(os.getenv("OLLAMA_PORT", "11434"))
-OLLAMA_BASE_URL = f"http://{OLLAMA_HOST}:{OLLAMA_PORT}"
+OLLAMA_BASE_URL = f"http://ollama:{OLLAMA_PORT}"
 
 ollamalist = ["phi3", "llama3.1", "deepseek-r1", "gemma4:e2b", "llama3.2:3b"]
 geminilist = ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"]

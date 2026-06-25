@@ -30,10 +30,8 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      - MODEL_PROVIDER=${MODEL_PROVIDER:-ollama}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - DATABASE=${DATABASE:-jobs_d3_eval.db}
-      - OLLAMA_HOST=ollama
       - OLLAMA_PORT=11434
       - RESUME_MODEL=${RESUME_MODEL:-llama3.2:3b}
     ports:
