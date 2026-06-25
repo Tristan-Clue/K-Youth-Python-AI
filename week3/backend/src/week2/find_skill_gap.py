@@ -11,7 +11,7 @@ load_dotenv()
 
 MAX_RETRIES = 3
 RETRY_DELAY = 12
-MODEL = os.getenv("MODEL", "gemini-2.5-flash")
+MODEL = os.getenv("RESUME_MODEL", "llama3.2:3b")
 
 class SkillGapResult(BaseModel):
 	gaps: list[str]

@@ -1,4 +1,25 @@
 services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    networks:
+      - resume-net
+    ports:
+      - "11435:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    # GPU support — uncomment if you have a GPU
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
   backend:
     build:
       context: ./backend
@@ -12,10 +33,16 @@ services:
       - MODEL_PROVIDER=${MODEL_PROVIDER:-ollama}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - DATABASE=${DATABASE:-jobs_d3_eval.db}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - OLLAMA_HOST=ollama
+      - OLLAMA_PORT=11434
+      - RESUME_MODEL=${RESUME_MODEL:-llama3.2:3b}
     ports:
       - "8001:8001"
+    depends_on:
+      - ollama
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
 
   frontend:
     build:
@@ -32,7 +59,13 @@ services:
       - "8000:8000"
     depends_on:
       - backend
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
 
 networks:
   resume-net:
     driver: bridge
+
+volumes:
+  ollama_data:
