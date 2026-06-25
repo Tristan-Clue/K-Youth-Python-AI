@@ -18,15 +18,16 @@ class ChatRequest(BaseModel):
     message: str
     resume_text: Optional[str] = None
 
-DB = os.getenv("DATABASE")
-DB_PATH = str(Path(__file__).resolve().parent / "data" / DB)
-MODEL_PROVIDER = os.getenv("MODEL_PROVIDER", "gemini")
+DB_NAME = os.getenv("DATABASE", "jobs_d3_eval.db")
+DB_PATH = str(Path(__file__).resolve().parent / "data" / DB_NAME)
 
 
 @app.post("/chat")
 def chat(req: ChatRequest):
-    """Process a user message, optionally with resume text, and return an LLM-generated reply."""
+    """Process a user message with an optional resume and return skill gaps."""
+    resume = req.resume_text or req.message
+    gaps = find_skill_gaps(resume, DB_PATH)
+    return {"reply": ", ".join(gaps.gaps)}
 
-    gaps = find_skill_gaps(req.message, DB_PATH)
-    reply = " ".join(gaps)
-    return {"reply": reply}
+
+

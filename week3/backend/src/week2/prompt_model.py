@@ -10,12 +10,12 @@ def prompt_model(model: str, prompt: str, temperature=None) -> str :
 	geminilist = ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"]
 	allmodels = ollamalist + geminilist
 
-	client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 	try:
 		if model not in allmodels:
 			raise ValueError(f"Model {model} not found in available models.")
 		if (model.startswith("gemini")):
 			print(f"Asking model: {model}")
+			client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 			response = client.models.generate_content(model=model, contents=prompt, config={'temperature':temperature}).text
 		else:
 			print(f"Asking model: {model}")

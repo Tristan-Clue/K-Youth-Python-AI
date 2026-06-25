@@ -1,12 +1,17 @@
 from pydantic import BaseModel
 from .prompt_model import prompt_model
+from dotenv import load_dotenv
 import sqlite3
 import time
 import json
+import os
+
+
+load_dotenv()
 
 MAX_RETRIES = 3
 RETRY_DELAY = 12
-MODEL = "gemini-2.5-flash"
+MODEL = os.getenv("MODEL", "gemini-2.5-flash")
 
 class SkillGapResult(BaseModel):
 	gaps: list[str]
