@@ -1,30 +1,22 @@
 # Base image with python 3.14.4
-FROM python:3.14.4-bookworm 
+FROM python:3.14.4-bookworm
 
-# Set a working directory inside the container
-WORKDIR /backend
+# Set working directory at /app (as per Day 4 requirement)
+WORKDIR /app
 
 # Installing requirements (uv) for the container
-# --no-cache-dir prevents pip cache buildup
 RUN pip install --no-cache-dir uv
 
-# Copying of dependencies separated from source code to improve efficiency
-# Docker does layer caching, so if dependencies are unchanged, docker won't run this again
+# Copy dependencies first for Docker layer caching
 COPY pyproject.toml uv.lock ./
-
-# Install dependencies, if above is unchanged, this don't run
 RUN uv sync
 
-# Copying source file; If source code changes, Docker rebuilds from this point onwards
-COPY . .
+# Copy source files (includes src/app.py, src/week2/, src/data/)
+COPY src/ ./src/
 
-# Expects traffic on port 8000
-EXPOSE 8000
+# Expects traffic on port 8001
+EXPOSE 8001
 
-# Sets fixed executor prompt
+# Run with uvicorn, app-dir points to src/
 ENTRYPOINT ["uv", "run", "uvicorn"]
-
-# Running commands will always have ENTRYPOINT
-# --app-dir looks for app inside src
-# --host: binds server to all interfaces; Without this the container becomes unaccessible from host
-CMD ["--app-dir", "src", "--host", "0.0.0.0", "app:app"] 
+CMD ["--app-dir", "src", "--host", "0.0.0.0", "--port", "8001", "app:app"]
