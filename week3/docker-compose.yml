@@ -21,6 +21,8 @@ services:
     #           capabilities: [gpu]
 
   backend:
+    image: backend
+    pull_policy: build
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -43,6 +45,8 @@ services:
       - 8.8.4.4
 
   frontend:
+    image: frontend
+    pull_policy: build
     build:
       context: ./frontend
       dockerfile: Dockerfile
