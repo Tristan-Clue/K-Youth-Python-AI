@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from prompt_model import prompt_model
+from .prompt_model import prompt_model
 import sqlite3
 import time
 import json

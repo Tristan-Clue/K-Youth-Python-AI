@@ -3,7 +3,7 @@ import json
 import time
 import math
 from pathlib import Path
-from prompt_model import prompt_model
+from .prompt_model import prompt_model
 
 MAX_RETRIES = 3
 RETRY_DELAY = 12
