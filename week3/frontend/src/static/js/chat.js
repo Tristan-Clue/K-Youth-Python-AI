@@ -92,7 +92,7 @@ async function sendMessage() {
             formData.resume_text = pdfTextToSend;
         }
 
-        const response = await fetch(window.BACKEND_URL + "/chat", {
+        const response = await fetch("/api/chat", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

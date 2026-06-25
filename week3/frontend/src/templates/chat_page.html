@@ -1,21 +1,17 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <!-- Encoding -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Resume Helper Chatbot</title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-   <!-- Link to styles.css -->
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-    <!-- Using bootstrap container css, margin top set 4 -->
     <div class="container mt-4">
 
-        <!-- Title -->
         <h1 class="mb-4 text-center">Resume Helper Chatbot</h1>
 
         <!-- Chat History -->
@@ -40,19 +36,16 @@
         </div>
 
         <!-- Input + Send -->
-        <!-- Children becomes column -->
-        <!-- Set gap between to 2 to not stick -->
-        <div class="row g-2">   
+        <div class="row g-2">
             <div class="col-10">
-                <input 
-                    type="text" 
+                <input
+                    type="text"
                     id="chat-input"
                     class="form-control"
                     placeholder="Type your message here..."
                 >
             </div>
 
-            <!-- d-grid stretches grid container instead of just text -->
             <div class="col-2 d-grid">
                 <button id="send-btn" class="btn btn-primary">
                     Send
@@ -61,13 +54,6 @@
         </div>
 
     </div>
-
-    <!-- PDF.js — loaded explicitly by chat.js-->
-
-    <!-- Backend URL from env var, passed via Jinja context -->
-    <script>
-        window.BACKEND_URL = "{{ backend_url }}";
-    </script>
 
     <!-- Your JS -->
     <script type="module" src="/static/js/chat.js"></script>
