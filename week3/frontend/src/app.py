@@ -40,7 +40,7 @@ async def proxy_chat(req: ChatRequest):
     """Proxy the chat request to the backend service."""
     import httpx
 
-    async with httpx.AsyncClient(timeout=60) as client:
+    async with httpx.AsyncClient(timeout=120) as client:
         resp = await client.post(f"{BACKEND_URL}/chat", json=req.model_dump())
 
     if resp.status_code != 200:
