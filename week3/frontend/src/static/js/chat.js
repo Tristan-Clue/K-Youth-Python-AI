@@ -12,6 +12,7 @@ const pdfUpload = document.getElementById("pdf-upload");
 
 let isSending = false;
 let pendingPdfFile = null;
+let storedResumeText = null;
 
 
 sendButton.addEventListener("click", sendMessage);
@@ -75,6 +76,8 @@ async function sendMessage() {
         try {
             const arrayBuffer = await pendingPdfFile.arrayBuffer();
             pdfTextToSend = await extractPdfText(arrayBuffer);
+            console.log("saving stored resume")
+            storedResumeText = pdfTextToSend;
             addMessage(`PDF attached: ${pendingPdfFile.name} (${pdfTextToSend.length} characters)`, "bot");
         } catch (error) {
             console.error("PDF extraction failed:", error);
@@ -87,9 +90,16 @@ async function sendMessage() {
     try {
         const formData = { message: message };
 
-        // Attach extracted PDF text if a file was uploaded
+        // Attach newly extracted PDF text if present
         if (pdfTextToSend) {
             formData.resume_text = pdfTextToSend;
+            console.log("Attaching pdf")
+        }
+
+        // Include stored resume text so the backend retains context
+        if (storedResumeText && !formData.resume_text) {
+            console.log("Using stored resume")
+            formData.resume_text = storedResumeText;
         }
 
         const response = await fetch("/api/chat", {
