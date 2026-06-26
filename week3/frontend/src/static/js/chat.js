@@ -76,7 +76,6 @@ async function sendMessage() {
         try {
             const arrayBuffer = await pendingPdfFile.arrayBuffer();
             pdfTextToSend = await extractPdfText(arrayBuffer);
-            console.log("saving stored resume")
             storedResumeText = pdfTextToSend;
             addMessage(`PDF attached: ${pendingPdfFile.name} (${pdfTextToSend.length} characters)`, "bot");
         } catch (error) {
@@ -93,12 +92,10 @@ async function sendMessage() {
         // Attach newly extracted PDF text if present
         if (pdfTextToSend) {
             formData.resume_text = pdfTextToSend;
-            console.log("Attaching pdf")
         }
 
         // Include stored resume text so the backend retains context
         if (storedResumeText && !formData.resume_text) {
-            console.log("Using stored resume")
             formData.resume_text = storedResumeText;
         }
 
