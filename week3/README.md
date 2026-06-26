@@ -44,12 +44,24 @@ The goal of Week 3 is to containerize the frontend and backend as separate micro
    - `RESUME_MODEL` — the Ollama model to use (e.g., `llama3.2:3b`)
    - `DATABASE` — path to the SQLite database (default: `jobs_d3_eval.db`)
 
-4. Build and run all services:
+4. **First-time setup — pull an Ollama model:**
+   The Ollama container starts with no models. Pull one before using the chatbot:
+   ```bash
+   docker compose up -d ollama
+   docker exec -it ollama ollama pull llama3.2:3b
+   ```
+   Models are persisted in the `ollama_data` volume, so you only need to do this once.
+   You can check with
+   ```
+   docker exec -it ollama ollama list
+   ```
+
+5. Build and run all services:
    ```bash
    docker compose up --build
    ```
 
-5. Open `http://localhost:8000` in your browser.
+6. Open `http://localhost:8000` in your browser.
 
 ### Local Development (without Docker)
 
