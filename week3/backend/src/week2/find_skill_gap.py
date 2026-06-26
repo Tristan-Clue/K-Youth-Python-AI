@@ -113,7 +113,7 @@ def llm_results(resume):
 					print(f"Retrying in {RETRY_DELAY} seconds...")
 					time.sleep(RETRY_DELAY)
 				else:
-					print(f"Retrying...")
+					print("Retrying...")
 	print(f"Failed after {MAX_RETRIES} attempts")
 	return None
 

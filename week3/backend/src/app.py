@@ -3,10 +3,6 @@ from dotenv import load_dotenv
 import os
 import logging
 
-logger = logging.getLogger(__name__)
-
-load_dotenv()
-
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Optional
@@ -14,6 +10,10 @@ from typing import Optional
 # Week 2 modules
 from week2.find_skill_gap import find_skill_gaps
 from week2.prompt_model import prompt_model
+
+logger = logging.getLogger(__name__)
+
+load_dotenv()
 
 app = FastAPI(title="Resume Helper Backend")
 
